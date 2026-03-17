@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora Hipotecaria — Ivan</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f7;
+      color: #1d1d1f;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    header {
+      background: #1d1d1f;
+      color: #fff;
+      padding: 1rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 { font-size: 16px; font-weight: 500; }
+    header span { font-size: 12px; color: #aaa; }
+    .container { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6e6e73;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin: 1.5rem 0 0.6rem;
+    }
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; }
+    @media(max-width: 600px) {
+      .grid-2 { grid-template-columns: 1fr; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+      .grid-4 { grid-template-columns: 1fr 1fr; }
+    }
+    .metric-card {
+      background: #f5f5f7;
+      border-radius: 10px;
+      padding: 0.875rem 1rem;
+    }
+    .metric-label { font-size: 11px; color: #6e6e73; margin-bottom: 3px; }
+    .metric-value { font-size: 22px; font-weight: 500; color: #1d1d1f; }
+    .metric-sub { font-size: 11px; color: #6e6e73; margin-top: 2px; }
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 0;
+      border-bottom: 0.5px solid #e5e5ea;
+    }
+    .input-row:last-child { border-bottom: none; }
+    .input-label { font-size: 13px; color: #3a3a3c; min-width: 155px; }
+    .input-val { font-size: 13px; font-weight: 600; color: #1d1d1f; min-width: 72px; text-align: right; }
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      border-radius: 2px;
+      background: #d1d1d6;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #1d1d1f;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge-ok  { background: #d1fae5; color: #065f46; }
+    .badge-warn{ background: #fef3c7; color: #92400e; }
+    .badge-bad { background: #fee2e2; color: #991b1b; }
+    .alert {
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      margin-top: 10px;
+    }
+    .alert-ok   { background: #d1fae5; color: #065f46; }
+    .alert-warn { background: #fef3c7; color: #92400e; }
+    .alert-bad  { background: #fee2e2; color: #991b1b; }
+    .flow-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 7px 0;
+      border-bottom: 0.5px solid #e5e5ea;
+      font-size: 13px;
+    }
+    .flow-row:last-child { border-bottom: none; font-weight: 600; font-size: 14px; }
+    .positive { color: #059669; }
+    .negative { color: #dc2626; }
+    .tab-row { display: flex; gap: 6px; margin: 1rem 0 0.75rem; }
+    .tab {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      border: 1px solid #d1d1d6;
+      background: #fff;
+      color: #3a3a3c;
+      font-family: inherit;
+    }
+    .tab.active { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6e6e73;
+      text-align: right;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e5e5ea;
+    }
+    th:first-child { text-align: left; }
+    td {
+      padding: 6px 10px;
+      text-align: right;
+      border-bottom: 0.5px solid #f2f2f7;
+      color: #1d1d1f;
+    }
+    td:first-child { text-align: left; color: #6e6e73; }
+    tr.row-paid td { color: #aaa; }
+    tr.row-done td { background: #d1fae5; color: #065f46; font-weight: 600; }
+    .pct-grid { display: flex; gap: 16px; flex-wrap: wrap; }
+    .pct-col { flex: 1; min-width: 90px; text-align: center; }
+    .pct-bar-wrap {
+      background: #f5f5f7;
+      border-radius: 6px;
+      height: 80px;
+      position: relative;
+      overflow: hidden;
+      margin: 6px 0 4px;
+    }
+    .pct-bar-fill {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      border-radius: 4px 4px 0 0;
+      transition: height .3s;
+    }
+    .pct-bar-label {
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      transform: translateY(-50%);
+      font-size: 15px;
+      font-weight: 600;
+      color: #1d1d1f;
+    }
+    .pct-sub { font-size: 10px; color: #6e6e73; white-space: pre-line; line-height: 1.3; }
+    .divider { border: none; border-top: 0.5px solid #e5e5ea; margin: 1rem 0; }
+    .highlight-row { background: #ecfdf5; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Calculadora Hipotecaria</h1>
+    <span>Apartamento — Análisis de inversión</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="grid-2">
+    <div>
+      <div class="section-title">Parámetros del crédito</div>
+      <div class="card">
+        <div class="input-row">
+          <span class="input-label">Precio apartamento</span>
+          <input type="range" id="precio" min="250000" max="320000" step="1000" value="275000">
+          <span class="input-val" id="precio-out">$275,000</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Prima / enganche</span>
+          <input type="range" id="prima" min="50000" max="200000" step="1000" value="125000">
+          <span class="input-val" id="prima-out">$125,000</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Tasa interés anual</span>
+          <input type="range" id="tasa" min="5" max="12" step="0.1" value="7">
+          <span class="input-val" id="tasa-out">7.0%</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Plazo (años)</span>
+          <input type="range" id="plazo" min="10" max="30" step="1" value="30">
+          <span class="input-val" id="plazo-out">30 años</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Abono extra mensual</span>
+          <input type="range" id="abono" min="0" max="2000" step="50" value="500">
+          <span class="input-val" id="abono-out">$500</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Gastos e ingresos</div>
+      <div class="card">
+        <div class="input-row">
+          <span class="input-label">Seguro mensual</span>
+          <input type="range" id="seguro" min="0" max="500" step="10" value="150">
+          <span class="input-val" id="seguro-out">$150</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Mantenimiento</span>
+          <input type="range" id="mant" min="0" max="800" step="10" value="350">
+          <span class="input-val" id="mant-out">$350</span>
+        </div>
+        <hr class="divider">
+        <div class="input-row">
+          <span class="input-label">Ingreso fijo</span>
+          <input type="range" id="ing-fijo" min="500" max="3000" step="50" value="800">
+          <span class="input-val" id="ing-fijo-out">$800</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Resupply (promedio)</span>
+          <input type="range" id="ing-var" min="0" max="5000" step="50" value="1750">
+          <span class="input-val" id="ing-var-out">$1,750</span>
+        </div>
+        <div class="input-row">
+          <span class="input-label">Resupply (mínimo)</span>
+          <input type="range" id="ing-min" min="0" max="2000" step="50" value="500">
+          <span class="input-val" id="ing-min-out">$500</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Resumen del crédito</div>
+  <div class="grid-4">
+    <div class="metric-card">
+      <div class="metric-label">Monto financiado</div>
+      <div class="metric-value" id="m-financiado">$150,000</div>
+      <div class="metric-sub">Precio − prima</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cuota hipotecaria</div>
+      <div class="metric-value" id="m-cuota">$997</div>
+      <div class="metric-sub">Solo el crédito</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Costo total mensual</div>
+      <div class="metric-value" id="m-total-mes">$1,497</div>
+      <div class="metric-sub">Cuota + seguro + mant.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total intereses</div>
+      <div class="metric-value" id="m-int-total">—</div>
+      <div class="metric-sub">Sin abonos extras</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-top:10px">
+    <div class="metric-card">
+      <div class="metric-label">Plazo real (con abonos)</div>
+      <div class="metric-value" id="m-plazo-real">—</div>
+      <div class="metric-sub" id="m-plazo-sub">Abonando $500/mes extra</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Ahorro en intereses</div>
+      <div class="metric-value" id="m-ahorro">—</div>
+      <div class="metric-sub">Vs. sin abonos extras</div>
+    </div>
+  </div>
+
+  <div class="section-title">Flujo mensual disponible para vivir</div>
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;color:#6e6e73;margin-bottom:8px">Mes malo (ingreso mínimo)</div>
+      <div class="flow-row"><span>Ingresos</span><span class="positive" id="f-bad-ing">—</span></div>
+      <div class="flow-row"><span>Cuota hipotecaria</span><span class="negative" id="f-bad-cuota">—</span></div>
+      <div class="flow-row"><span>Seguro + mantenimiento</span><span class="negative" id="f-bad-fijos">—</span></div>
+      <div class="flow-row"><span>Disponible para vivir</span><span id="f-bad-disp">—</span></div>
+      <div id="alert-bad" class="alert alert-warn"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;color:#6e6e73;margin-bottom:8px">Mes normal (ingreso promedio)</div>
+      <div class="flow-row"><span>Ingresos</span><span class="positive" id="f-avg-ing">—</span></div>
+      <div class="flow-row"><span>Cuota hipotecaria</span><span class="negative" id="f-avg-cuota">—</span></div>
+      <div class="flow-row"><span>Seguro + mantenimiento</span><span class="negative" id="f-avg-fijos">—</span></div>
+      <div class="flow-row"><span>Abono extra capital</span><span class="negative" id="f-avg-abono">—</span></div>
+      <div class="flow-row"><span>Disponible para vivir</span><span id="f-avg-disp">—</span></div>
+      <div id="alert-avg" class="alert alert-ok"></div>
+    </div>
+  </div>
+
+  <div class="section-title">% del costo mensual sobre ingresos</div>
+  <div class="card">
+    <div class="pct-grid" id="pct-bars"></div>
+  </div>
+
+  <div class="section-title">Tabla de amortización anual</div>
+  <div class="tab-row">
+    <button class="tab active" onclick="setTab('normal',this)">Sin abonos extras</button>
+    <button class="tab" onclick="setTab('extra',this)">Con abonos extras</button>
+  </div>
+  <div class="card" style="overflow-x:auto">
+    <table id="amort-table"></table>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = v => '$' + Math.round(v).toLocaleString('en-US');
+
+let currentTab = 'normal';
+function setTab(t, btn) {
+  currentTab = t;
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+function calcPMT(P, annualRate, years) {
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  if (r === 0) return P / n;
+  return P * (r * Math.pow(1+r,n)) / (Math.pow(1+r,n)-1);
+}
+
+function calcPayoff(P, annualRate, years, extra) {
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  const p = calcPMT(P, annualRate, years);
+  let bal = P, months = 0, totalInt = 0;
+  while (bal > 0.01 && months < n) {
+    months++;
+    const interest = bal * r;
+    totalInt += interest;
+    bal -= (p - interest);
+    if (extra > 0) bal -= extra;
+    if (bal < 0) bal = 0;
+  }
+  return { months, totalInt };
+}
+
+function buildAmortTable(P, annualRate, years, extra, withExtra) {
+  const r = annualRate / 100 / 12;
+  const n = years * 12;
+  const p = calcPMT(P, annualRate, years);
+  let bal = P;
+  const rows = [];
+  for (let yr = 1; yr <= years; yr++) {
+    let yPrincipal = 0, yInterest = 0, yExtra = 0;
+    for (let m = 0; m < 12; m++) {
+      if (bal <= 0.01) break;
+      const interest = bal * r;
+      yInterest += interest;
+      const principal = Math.min(p - interest, bal);
+      yPrincipal += principal;
+      bal -= principal;
+      if (withExtra && extra > 0 && bal > 0) {
+        const ex = Math.min(extra, bal);
+        yExtra += ex;
+        bal -= ex;
+      }
+    }
+    rows.push({ yr, yPrincipal, yInterest, yExtra, bal: Math.max(bal, 0) });
+    if (bal <= 0.01) break;
+  }
+  return rows;
+}
+
+function renderAll() {
+  const precio   = +$('precio').value;
+  const prima    = +$('prima').value;
+  const tasa     = +$('tasa').value;
+  const plazo    = +$('plazo').value;
+  const abono    = +$('abono').value;
+  const seguro   = +$('seguro').value;
+  const mant     = +$('mant').value;
+  const ingFijo  = +$('ing-fijo').value;
+  const ingVar   = +$('ing-var').value;
+  const ingMin   = +$('ing-min').value;
+
+  const financiado   = Math.max(0, precio - prima);
+  const cuota        = financiado > 0 ? calcPMT(financiado, tasa, plazo) : 0;
+  const fijos        = seguro + mant;
+  const totalMes     = cuota + fijos;
+  const ingPromedio  = ingFijo + ingVar;
+  const ingMinReal   = ingFijo + ingMin;
+  const intSinAbono  = cuota * plazo * 12 - financiado;
+  const { months: mConAbono, totalInt: intConAbono } = financiado > 0
+    ? calcPayoff(financiado, tasa, plazo, abono)
+    : { months: 0, totalInt: 0 };
+  const ahorro = intSinAbono - intConAbono;
+
+  $('precio-out').textContent  = fmt(precio);
+  $('prima-out').textContent   = fmt(prima);
+  $('tasa-out').textContent    = tasa.toFixed(1) + '%';
+  $('plazo-out').textContent   = plazo + ' años';
+  $('abono-out').textContent   = fmt(abono);
+  $('seguro-out').textContent  = fmt(seguro);
+  $('mant-out').textContent    = fmt(mant);
+  $('ing-fijo-out').textContent = fmt(ingFijo);
+  $('ing-var-out').textContent = fmt(ingVar);
+  $('ing-min-out').textContent = fmt(ingMin);
+
+  $('m-financiado').textContent = fmt(financiado);
+  $('m-cuota').textContent      = fmt(cuota);
+  $('m-total-mes').textContent  = fmt(totalMes);
+  $('m-int-total').textContent  = fmt(intSinAbono);
+
+  const yrR = Math.floor(mConAbono / 12);
+  const moR = mConAbono % 12;
+  $('m-plazo-real').textContent = abono > 0 ? `${yrR}a ${moR}m` : `${plazo}a 0m`;
+  $('m-plazo-sub').textContent  = abono > 0 ? `Abonando ${fmt(abono)}/mes extra` : 'Sin abonos extras';
+  $('m-ahorro').textContent     = abono > 0 ? fmt(ahorro) : '—';
+
+  const dispBad = ingMinReal - cuota - fijos;
+  const dispAvg = ingPromedio - cuota - fijos - abono;
+
+  $('f-bad-ing').textContent   = '+' + fmt(ingMinReal);
+  $('f-bad-cuota').textContent = '−' + fmt(cuota);
+  $('f-bad-fijos').textContent = '−' + fmt(fijos);
+  $('f-avg-ing').textContent   = '+' + fmt(ingPromedio);
+  $('f-avg-cuota').textContent = '−' + fmt(cuota);
+  $('f-avg-fijos').textContent = '−' + fmt(fijos);
+  $('f-avg-abono').textContent = abono > 0 ? '−' + fmt(abono) : '$0';
+
+  const dBad = $('f-bad-disp');
+  dBad.textContent = (dispBad >= 0 ? '+' : '') + fmt(dispBad);
+  dBad.className = dispBad >= 0 ? 'positive' : 'negative';
+
+  const dAvg = $('f-avg-disp');
+  dAvg.textContent = (dispAvg >= 0 ? '+' : '') + fmt(dispAvg);
+  dAvg.className = dispAvg >= 0 ? 'positive' : 'negative';
+
+  const ab = $('alert-bad');
+  if (dispBad < 0) {
+    ab.className = 'alert alert-bad';
+    ab.textContent = `Déficit de ${fmt(Math.abs(dispBad))} en meses malos. Tu colchón cubre ~${Math.floor(6500 / Math.abs(dispBad))} meses.`;
+  } else if (dispBad < 300) {
+    ab.className = 'alert alert-warn';
+    ab.textContent = `Muy ajustado. Solo ${fmt(dispBad)} disponible. Mantené el colchón activo.`;
+  } else {
+    ab.className = 'alert alert-ok';
+    ab.textContent = `Aceptable incluso en meses malos (${fmt(dispBad)} libre).`;
+  }
+
+  const aa = $('alert-avg');
+  if (dispAvg < 300) {
+    aa.className = 'alert alert-warn';
+    aa.textContent = `Poco margen en mes promedio. Considerá reducir el abono extra.`;
+  } else {
+    aa.className = 'alert alert-ok';
+    aa.textContent = `Bien. Te quedan ${fmt(dispAvg)} libres en un mes normal.`;
+  }
+
+  const pctGrid = $('pct-bars');
+  pctGrid.innerHTML = '';
+  [
+    { label: 'Mes malo\n(solo cuota)',   pct: ingMinReal  > 0 ? cuota    / ingMinReal  : 0 },
+    { label: 'Mes malo\n(costo total)',  pct: ingMinReal  > 0 ? totalMes / ingMinReal  : 0 },
+    { label: 'Mes normal\n(costo total)',pct: ingPromedio > 0 ? totalMes / ingPromedio : 0 },
+    { label: 'Mes meta\n(costo total)',  pct: (ingFijo+2000) > 0 ? totalMes / (ingFijo+2000) : 0 },
+  ].forEach(s => {
+    const color = s.pct > 1 ? '#ef4444' : s.pct > 0.5 ? '#f59e0b' : '#10b981';
+    const status = s.pct > 1 ? 'Déficit' : s.pct > 0.5 ? 'Apretado' : 'Saludable';
+    const h = Math.min(s.pct, 1.4) * 80;
+    pctGrid.innerHTML += `
+      <div class="pct-col">
+        <div class="pct-sub">${s.label}</div>
+        <div class="pct-bar-wrap">
+          <div class="pct-bar-fill" style="height:${h}px;background:${color}"></div>
+          <div class="pct-bar-label">${(s.pct*100).toFixed(0)}%</div>
+        </div>
+        <div style="font-size:10px;color:${color};font-weight:600">${status}</div>
+      </div>`;
+  });
+
+  const rows = buildAmortTable(financiado, tasa, plazo, abono, currentTab === 'extra');
+  const withExtra = currentTab === 'extra';
+  let html = `<tr>
+    <th style="text-align:left">Año</th>
+    <th>Capital</th><th>Interés</th>
+    ${withExtra ? '<th>Abono extra</th>' : ''}
+    <th>Saldo restante</th>
+  </tr>`;
+  rows.forEach(row => {
+    const done = row.bal <= 0.01;
+    html += `<tr class="${done ? 'row-done' : ''}">
+      <td>Año ${row.yr}</td>
+      <td>${fmt(row.yPrincipal)}</td>
+      <td>${fmt(row.yInterest)}</td>
+      ${withExtra ? `<td>${fmt(row.yExtra)}</td>` : ''}
+      <td>${done ? '✓ Pagado' : fmt(row.bal)}</td>
+    </tr>`;
+  });
+  $('amort-table').innerHTML = html;
+}
+
+['precio','prima','tasa','plazo','abono','seguro','mant','ing-fijo','ing-var','ing-min']
+  .forEach(id => $(id).addEventListener('input', renderAll));
+
+renderAll();
+</script>
+</body>
+</html>
