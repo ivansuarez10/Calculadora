@@ -64,6 +64,9 @@
     .input-row:last-child { border-bottom: none; }
     .input-label { font-size: 13px; color: #3a3a3c; min-width: 155px; }
     .input-val { font-size: 13px; font-weight: 600; color: #1d1d1f; min-width: 72px; text-align: right; }
+    .input-edit { width: 96px; font-family: inherit; border: none; border-bottom: 1px dashed #c7c7cc; background: transparent; padding: 2px 4px; border-radius: 6px 6px 0 0; outline: none; }
+    .input-edit:hover { border-bottom-color: #8e8e93; }
+    .input-edit:focus { background: #f2f2f7; border-bottom: 1px solid #1d1d1f; }
     input[type=range] {
       flex: 1;
       -webkit-appearance: none;
@@ -187,13 +190,13 @@
       <div class="card">
         <div class="input-row">
           <span class="input-label">Precio apartamento</span>
-          <input type="range" id="precio" min="200000" max="320000" step="1000" value="275000">
-          <span class="input-val" id="precio-out">$275,000</span>
+          <input type="range" id="precio" min="0" max="320000" step="1000" value="275000">
+          <input class="input-val input-edit" id="precio-out" type="text" inputmode="numeric" value="$275,000" aria-label="Precio del apartamento en dólares (se puede escribir)">
         </div>
         <div class="input-row">
           <span class="input-label">Prima / enganche</span>
-          <input type="range" id="prima" min="50000" max="200000" step="1000" value="125000">
-          <span class="input-val" id="prima-out">$125,000</span>
+          <input type="range" id="prima" min="0" max="200000" step="1000" value="125000">
+          <input class="input-val input-edit" id="prima-out" type="text" inputmode="numeric" value="$125,000" aria-label="Prima en dólares (se puede escribir)">
         </div>
         <div class="input-row">
           <span class="input-label">Tasa interés anual</span>
@@ -381,9 +384,29 @@ function buildAmortTable(P, annualRate, years, extra, withExtra) {
   return rows;
 }
 
+// Precio y prima: además del slider se pueden escribir, desde 0 y sin tope.
+// El valor escrito se guarda exacto (el slider salta de 1,000 en 1,000) y el slider
+// se estira solo si el número pasa su máximo.
+const exacto = {};
+function valorDe(id) { return id in exacto ? exacto[id] : +$(id).value; }
+function ponerEditable(id, texto) { const el = $(id); if (document.activeElement !== el) el.value = texto; }
+function conectarEditable(id) {
+  const slider = $(id), caja = $(id + '-out');
+  caja.addEventListener('input', () => {
+    const n = Math.max(0, Math.round(+caja.value.replace(/[^0-9.]/g, '') || 0));
+    if (n > +slider.max) slider.max = String(Math.ceil(n * 1.25 / 10000) * 10000);
+    exacto[id] = n;
+    slider.value = n;
+    renderAll();
+  });
+  caja.addEventListener('focus', () => caja.select());
+  caja.addEventListener('blur', () => { caja.value = fmt(valorDe(id)); });
+  caja.addEventListener('keydown', e => { if (e.key === 'Enter') caja.blur(); });
+  slider.addEventListener('input', () => { delete exacto[id]; renderAll(); });
+}
 function renderAll() {
-  const precio   = +$('precio').value;
-  const prima    = +$('prima').value;
+  const precio   = valorDe('precio');
+  const prima    = valorDe('prima');
   const tasa     = +$('tasa').value;
   const plazo    = +$('plazo').value;
   const abono    = +$('abono').value;
@@ -405,8 +428,8 @@ function renderAll() {
     : { months: 0, totalInt: 0 };
   const ahorro = intSinAbono - intConAbono;
 
-  $('precio-out').textContent  = fmt(precio);
-  $('prima-out').textContent   = fmt(prima);
+  ponerEditable('precio-out', fmt(precio));
+  ponerEditable('prima-out', fmt(prima));
   $('tasa-out').textContent    = tasa.toFixed(1) + '%';
   $('plazo-out').textContent   = plazo + ' años';
   $('abono-out').textContent   = fmt(abono);
@@ -512,6 +535,7 @@ function renderAll() {
 
 ['precio','prima','tasa','plazo','abono','seguro','mant','ing-fijo','ing-var','ing-min']
   .forEach(id => $(id).addEventListener('input', renderAll));
+['precio','prima'].forEach(conectarEditable);
 
 renderAll();
 </script>
